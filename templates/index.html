@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diabetes Meal Planner - Knapsack Algorithm</title>
+    <style>
+        /* Minimal Black and White Design */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #ffffff;
+            color: #000000;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            border-bottom: 3px solid #000000;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        h2 {
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 18px;
+            border-left: 5px solid #000000;
+            padding-left: 10px;
+        }
+        
+        /* Info box explaining the algorithm */
+        .info-box {
+            border: 2px solid #000000;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .info-box h3 {
+            margin-bottom: 10px;
+        }
+        
+        .info-box ul {
+            margin-left: 20px;
+        }
+        
+        /* Input controls section */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .control-group {
+            border: 1px solid #000000;
+            padding: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #000000;
+            background-color: #ffffff;
+            color: #000000;
+            font-family: 'Courier New', monospace;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            background-color: #f0f0f0;
+        }
+        
+        /* Food selection grid */
+        .food-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .food-item {
+            border: 1px solid #000000;
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .food-item:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .food-item.selected {
+            background-color: #000000;
+            color: #ffffff;
+        }
+        
+        .food-item input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        
+        .food-details {
+            font-size: 11px;
+            margin-top: 5px;
+        }
+        
+        /* Buttons */
+        button {
+            background-color: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            padding: 12px 30px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-right: 10px;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background-color: #ffffff;
+            color: #000000;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Results section */
+        #results {
+            margin-top: 30px;
+            border: 3px solid #000000;
+            padding: 20px;
+            display: none;
+        }
+        
+        .result-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #000000;
+        }
+        
+        .stat {
+            text-align: center;
+            border: 1px solid #000000;
+            padding: 10px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+        }
+        
+        /* Selected foods table */
+        .foods-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .foods-table th,
+        .foods-table td {
+            border: 1px solid #000000;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        .foods-table th {
+            background-color: #000000;
+            color: #ffffff;
+        }
+        
+        .foods-table tr:nth-child(even) {
+            background-color: #f5f5f5;
+        }
+        
+        .error-message {
+            background-color: #000000;
+            color: #ffffff;
+            padding: 15px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .food-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .result-summary {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            .container {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 20px;
+                padding-bottom: 8px;
+                margin-bottom: 15px;
+            }
+            
+            h2 {
+                font-size: 16px;
+                margin-top: 20px;
+                margin-bottom: 12px;
+                padding-left: 8px;
+            }
+            
+            .info-box {
+                padding: 12px;
+                margin-bottom: 15px;
+            }
+            
+            .info-box h3 {
+                font-size: 14px;
+            }
+            
+            .info-box ul {
+                margin-left: 15px;
+                font-size: 13px;
+            }
+            
+            .control-group {
+                padding: 12px;
+            }
+            
+            label {
+                font-size: 14px;
+            }
+            
+            input[type="number"],
+            select {
+                font-size: 14px !important;
+            }
+            
+            .food-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 8px;
+            }
+            
+            .food-item {
+                padding: 8px;
+                font-size: 12px;
+            }
+            
+            .food-details {
+                font-size: 10px;
+                margin-top: 3px;
+            }
+            
+            button {
+                padding: 10px 20px;
+                font-size: 12px;
+                margin-right: 5px;
+                margin-bottom: 10px;
+            }
+            
+            #results {
+                padding: 15px;
+                margin-top: 20px;
+            }
+            
+            .result-summary {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+            
+            .stat {
+                padding: 8px;
+                font-size: 12px;
+            }
+            
+            .stat-value {
+                font-size: 18px;
+            }
+            
+            .stat-label {
+                font-size: 10px;
+            }
+            
+            .foods-table {
+                font-size: 12px;
+            }
+            
+            .foods-table th,
+            .foods-table td {
+                padding: 8px 5px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 18px;
+                padding-bottom: 6px;
+                margin-bottom: 10px;
+            }
+            
+            h2 {
+                font-size: 14px;
+                margin-top: 15px;
+                margin-bottom: 10px;
+            }
+            
+            .controls {
+                gap: 12px;
+            }
+            
+            .control-group {
+                padding: 10px;
+            }
+            
+            .info-box {
+                padding: 10px;
+                margin-bottom: 12px;
+            }
+            
+            .food-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 6px;
+            }
+            
+            .food-item {
+                padding: 6px;
+                font-size: 11px;
+            }
+            
+            .food-details {
+                font-size: 9px;
+            }
+            
+            button {
+                padding: 8px 15px;
+                font-size: 11px;
+                width: 100%;
+                margin-bottom: 8px;
+                margin-right: 0;
+            }
+            
+            #recommendationBox {
+                padding: 12px !important;
+            }
+            
+            #recommendationBox > div {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .result-summary {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .foods-table {
+                font-size: 11px;
+            }
+            
+            .foods-table th,
+            .foods-table td {
+                padding: 6px 3px;
+            }
+        }
+        
+        /* Mobile-first adjustments for table readability */
+        @media (max-width: 640px) {
+            .foods-table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .foods-table thead {
+                display: none;
+            }
+            
+            .foods-table tbody,
+            .foods-table tr,
+            .foods-table td {
+                display: block;
+                width: 100%;
+            }
+            
+            .foods-table tr {
+                margin-bottom: 15px;
+                border: 1px solid #000000;
+            }
+            
+            .foods-table td {
+                text-align: right;
+                padding: 8px;
+                position: relative;
+                padding-left: 50%;
+            }
+            
+            .foods-table td:before {
+                content: attr(data-label);
+                position: absolute;
+                left: 8px;
+                font-weight: bold;
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DIABETES MEAL PLANNER</h1>
+        
+        <!-- Algorithm explanation -->
+        <div class="info-box">
+            <h3>Blood Sugar Adaptive Meal Planning</h3>
+            <p><strong>Enhanced Algorithm:</strong> Automatically adjusts carb limits and food preferences based on your current blood sugar level.</p>
+            <ul>
+                <li><strong>Low Blood Sugar (&lt;70):</strong> Increases carbs, prefers medium-high GI foods for quick energy</li>
+                <li><strong>Normal (70-140):</strong> Standard carb targets, balanced GI food selection</li>
+                <li><strong>High (140-250):</strong> Reduces carbs 25-50%, strongly favors low GI foods</li>
+                <li><strong>Very High (&gt;250):</strong> Minimal carbs, protein-focused with low GI vegetables</li>
+                <li><strong>Glycemic Index (GI):</strong> Algorithm weights food selection based on how quickly they raise blood sugar</li>
+            </ul>
+        </div>
+        
+        <!-- Blood Sugar Input -->
+        <h2>1. ENTER YOUR CURRENT BLOOD SUGAR</h2>
+        <div class="controls">
+            <div class="control-group">
+                <label for="bloodSugar">Blood Sugar Level (mg/dL):</label>
+                <input type="number" id="bloodSugar" value="100" min="40" max="400" oninput="updateRecommendation()">
+                <small>Normal fasting: 70-100 | After meal: 100-140</small>
+            </div>
+            
+            <div class="control-group">
+                <label for="mealType">Meal Type:</label>
+                <select id="mealType" onchange="updateRecommendation()" style="width: 100%; padding: 8px; border: 2px solid #000; background: #fff; font-family: 'Courier New', monospace;">
+                    <option value="breakfast">Breakfast</option>
+                    <option value="lunch" selected>Lunch</option>
+                    <option value="dinner">Dinner</option>
+                    <option value="snack">Snack</option>
+                </select>
+                <small>Affects carb targets</small>
+            </div>
+        </div>
+        
+        <!-- Recommendation display -->
+        <div id="recommendationBox" style="border: 2px solid #000; padding: 15px; margin: 20px 0; background: #f5f5f5; display: none;">
+            <h3 style="margin-bottom: 10px;"> RECOMMENDED TARGETS</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div>
+                    <strong>Blood Sugar Status:</strong><br>
+                    <span id="recStatus" style="font-size: 18px;">-</span>
+                </div>
+                <div>
+                    <strong>Max Carbohydrates:</strong><br>
+                    <span id="recMaxCarbs" style="font-size: 18px;">-</span>
+                </div>
+                <div>
+                    <strong>Min Protein:</strong><br>
+                    <span id="recMinProtein" style="font-size: 18px;">-</span>
+                </div>
+                <div>
+                    <strong>GI Preference:</strong><br>
+                    <span id="recGIPreference" style="font-size: 18px;">-</span>
+                </div>
+            </div>
+            <div style="margin-top: 10px; padding: 10px; background: #fff; border: 1px solid #000;">
+                <strong>Advice:</strong> <span id="recMessage">-</span>
+            </div>
+            <div id="recWarning" style="margin-top: 10px; padding: 10px; background: #000; color: #fff; display: none;">
+                <strong>⚠️ WARNING:</strong> <span id="recWarningText">-</span>
+            </div>
+        </div>
+        
+        <!-- Food selection -->
+        <h2>2. SELECT AVAILABLE FOODS (Optional - Leave empty for all)</h2>
+        <div style="margin-bottom: 10px;">
+            <button onclick="selectAll()">Select All</button>
+            <button onclick="deselectAll()">Deselect All</button>
+        </div>
+        <div class="food-grid" id="foodGrid">
+            {% for food in foods %}
+            <div class="food-item" onclick="toggleFood('{{ food.id }}', this)">
+                <input type="checkbox" id="food-{{ food.id }}" value="{{ food.id }}">
+                <strong>{{ food.name }}</strong>
+                {% if food.gi_category != 'None' %}
+                <span style="font-size: 10px; padding: 2px 4px; border: 1px solid #000; margin-left: 5px;">GI: {{ food.gi_category }}</span>
+                {% endif %}
+                <div class="food-details">
+                    Carbs: {{ food.carbs }}g | Protein: {{ food.protein }}g<br>
+                    Calories: {{ food.calories }} | {{ food.serving }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Calculate button -->
+        <h2>3. CALCULATE OPTIMAL MEAL PLAN</h2>
+        <button onclick="calculateMealPlan()" id="calculateBtn">CALCULATE</button>
+        
+        <!-- Loading indicator -->
+        <div class="loading" id="loading">
+            <p>⏳ Running Knapsack Algorithm...</p>
+        </div>
+        
+        <!-- Error message -->
+        <div class="error-message" id="errorMessage"></div>
+        
+        <!-- Results -->
+        <div id="results">
+            <h2>OPTIMAL MEAL PLAN</h2>
+            
+            <div class="result-summary">
+                <div class="stat">
+                    <div class="stat-label">TOTAL CARBS</div>
+                    <div class="stat-value" id="totalCarbs">-</div>
+                    <div class="stat-label">/ <span id="carbLimit">-</span>g limit</div>
+                </div>
+                
+                <div class="stat">
+                    <div class="stat-label">TOTAL PROTEIN</div>
+                    <div class="stat-value" id="totalProtein">-</div>
+                    <div class="stat-label">/ <span id="proteinTarget">-</span>g target</div>
+                </div>
+                
+                <div class="stat">
+                    <div class="stat-label">TOTAL CALORIES</div>
+                    <div class="stat-value" id="totalCalories">-</div>
+                    <div class="stat-label">kcal</div>
+                </div>
+                
+                <div class="stat">
+                    <div class="stat-label">AVG GLYCEMIC INDEX</div>
+                    <div class="stat-value" id="avgGI">-</div>
+                    <div class="stat-label"><span id="giCategory">-</span></div>
+                </div>
+                
+                <div class="stat">
+                    <div class="stat-label">FOODS SELECTED</div>
+                    <div class="stat-value" id="foodCount">-</div>
+                    <div class="stat-label">items</div>
+                </div>
+            </div>
+            
+            <h3>Selected Foods:</h3>
+            <table class="foods-table">
+                <thead>
+                    <tr>
+                        <th>Food</th>
+                        <th>Serving</th>
+                        <th>Carbs (g)</th>
+                        <th>Protein (g)</th>
+                        <th>Calories</th>
+                        <th>GI Category</th>
+                    </tr>
+                </thead>
+                <tbody id="selectedFoods">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        // Store selected food IDs
+        let selectedFoods = new Set();
+        
+        /**
+         * Update recommendation display when blood sugar or meal type changes
+         * Fetches recommendations from backend without calculating full meal plan
+         */
+        async function updateRecommendation() {
+            const bloodSugar = parseFloat(document.getElementById('bloodSugar').value);
+            const mealType = document.getElementById('mealType').value;
+            
+            if (isNaN(bloodSugar) || bloodSugar < 40) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/get-recommendation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        blood_sugar: bloodSugar,
+                        meal_type: mealType
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayRecommendation(data.recommendation);
+                }
+            } catch (error) {
+                console.error('Failed to fetch recommendation:', error);
+            }
+        }
+        
+        /**
+         * Display the blood sugar based recommendations
+         */
+        function displayRecommendation(rec) {
+            document.getElementById('recommendationBox').style.display = 'block';
+            
+            // Status with color coding
+            const statusColors = {
+                'LOW': '#000',
+                'NORMAL': '#000',
+                'ELEVATED': '#000',
+                'HIGH': '#000',
+                'VERY HIGH': '#000'
+            };
+            
+            document.getElementById('recStatus').textContent = rec.status;
+            document.getElementById('recStatus').style.fontWeight = 'bold';
+            
+            document.getElementById('recMaxCarbs').textContent = rec.max_carbs + 'g';
+            document.getElementById('recMinProtein').textContent = rec.min_protein + 'g';
+            
+            // Format GI preference for display
+            const giDisplay = {
+                'low': 'Low GI Only',
+                'low_medium': 'Low-Medium GI',
+                'medium_high': 'Medium-High GI'
+            };
+            document.getElementById('recGIPreference').textContent = giDisplay[rec.gi_preference] || rec.gi_preference;
+            
+            document.getElementById('recMessage').textContent = rec.message;
+            
+            // Show warning if present
+            if (rec.warning) {
+                document.getElementById('recWarning').style.display = 'block';
+                document.getElementById('recWarningText').textContent = rec.warning;
+            } else {
+                document.getElementById('recWarning').style.display = 'none';
+            }
+        }
+        
+        // Initialize recommendation on page load
+        window.addEventListener('DOMContentLoaded', updateRecommendation);
+        
+        /**
+         * Toggle food selection
+         * Updates the visual state and the internal set
+         */
+        function toggleFood(foodId, element) {
+            const checkbox = element.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            
+            foodId = parseInt(foodId);
+            
+            if (checkbox.checked) {
+                selectedFoods.add(foodId);
+                element.classList.add('selected');
+            } else {
+                selectedFoods.delete(foodId);
+                element.classList.remove('selected');
+            }
+        }
+        
+        /**
+         * Select all foods in the grid
+         */
+        function selectAll() {
+            document.querySelectorAll('.food-item').forEach(item => {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                checkbox.checked = true;
+                item.classList.add('selected');
+                selectedFoods.add(parseInt(checkbox.value));
+            });
+        }
+        
+        /**
+         * Deselect all foods
+         */
+        function deselectAll() {
+            document.querySelectorAll('.food-item').forEach(item => {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                checkbox.checked = false;
+                item.classList.remove('selected');
+            });
+            selectedFoods.clear();
+        }
+        
+        /**
+         * Calculate optimal meal plan using blood sugar based recommendations
+         * Sends blood sugar level and meal type to backend
+         */
+        async function calculateMealPlan() {
+            // Get user inputs
+            const bloodSugar = parseFloat(document.getElementById('bloodSugar').value);
+            const mealType = document.getElementById('mealType').value;
+            
+            // Validate inputs
+            if (isNaN(bloodSugar) || bloodSugar < 40 || bloodSugar > 400) {
+                showError('Please enter a valid blood sugar value (40-400 mg/dL)');
+                return;
+            }
+            
+            // Show loading, hide previous results
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('calculateBtn').disabled = true;
+            
+            try {
+                // Send POST request to Flask backend with blood sugar
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        blood_sugar: bloodSugar,
+                        meal_type: mealType,
+                        selected_foods: Array.from(selectedFoods)
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResults(data.meal_plan);
+                } else {
+                    showError(data.error || 'Failed to calculate meal plan');
+                    // Still show recommendation if available
+                    if (data.recommendation) {
+                        displayRecommendation(data.recommendation);
+                    }
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('calculateBtn').disabled = false;
+            }
+        }
+        
+        /**
+         * Display the calculated meal plan results
+         * Updates the results section with optimized food selection
+         */
+        function displayResults(mealPlan) {
+            // Update summary statistics
+            document.getElementById('totalCarbs').textContent = mealPlan.total_carbs;
+            document.getElementById('totalProtein').textContent = mealPlan.total_protein;
+            document.getElementById('totalCalories').textContent = mealPlan.total_calories;
+            document.getElementById('foodCount').textContent = mealPlan.foods.length;
+            document.getElementById('carbLimit').textContent = mealPlan.carb_limit;
+            document.getElementById('proteinTarget').textContent = mealPlan.protein_target;
+            
+            // Display average GI
+            const avgGI = mealPlan.average_gi || 0;
+            document.getElementById('avgGI').textContent = avgGI > 0 ? avgGI : 'N/A';
+            
+            // Categorize average GI
+            let giCategory = 'N/A';
+            if (avgGI > 0) {
+                if (avgGI < 55) giCategory = 'Low';
+                else if (avgGI < 70) giCategory = 'Medium';
+                else giCategory = 'High';
+            }
+            document.getElementById('giCategory').textContent = giCategory;
+            
+            // Build the foods table with GI information
+            const tbody = document.getElementById('selectedFoods');
+            tbody.innerHTML = '';
+            
+            mealPlan.foods.forEach(food => {
+                const row = tbody.insertRow();
+                const giDisplay = food.gi_category || 'None';
+                row.innerHTML = `
+                    <td data-label="Food"><strong>${food.name}</strong></td>
+                    <td data-label="Serving">${food.serving}</td>
+                    <td data-label="Carbs (g)">${food.carbs}</td>
+                    <td data-label="Protein (g)">${food.protein}</td>
+                    <td data-label="Calories">${food.calories}</td>
+                    <td data-label="GI Category">${giDisplay}</td>
+                `;
+            });
+            
+            // Show results section
+            document.getElementById('results').style.display = 'block';
+            
+            // Scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        /**
+         * Display error message to user
+         */
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = '❌ ERROR: ' + message;
+            errorDiv.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
